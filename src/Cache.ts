@@ -1,151 +1,145 @@
-import {createStorage, CreateStorageOptions, Storage, StorageValue} from "unstorage";
+import {
+    createStorage,
+    CreateStorageOptions,
+} from "unstorage";
+import {isUnset} from "./utils";
+import Layer from "./Layer";
+import IStorage, {StorageValue} from "./types/IStorage";
+import {a} from "unstorage/dist/types-bb85dfb7";
 
 type TransactionOptions = Record<string, any>;
 
-export default class Cache{
-    layers: Array<Storage>;
+export default class Cache {
+    layers: Array<Layer>;
 
     constructor() {
         this.layers = [];
+    }
+
+    withLayer(options: CreateStorageOptions){
+        const storage = createStorage(options);
+        return this.withStorageLayer(storage);
+    }
+
+    withStorageLayer(storage: IStorage){
+        const layer = new Layer(storage);
+        this.layers.push(layer);
+        return this;
+    }
+
+    async msync (keys: string[]): Promise<Array<StorageValue>> {
+        const values = await this.layer(-1).mget(keys);
+        const pairs = [];
+        values.forEach((value, i) => {
+            if (isUnset(value)) {
+                return;
+            }
+
+            pairs.push([keys[i], value]);
+        })
+
+        const tasks = this.layers
+            .slice(0, -1)
+            .map(layer => layer.mset(pairs));
+
+        await Promise.all(tasks);
+        return values;
+    }
+
+    async mget (keys: string[]): Promise<StorageValue> {
+        if (!keys.length) {
+            return [];
+        }
+
+        const tasks = [];
+        const values = await this.traverseGet(0, keys, tasks);
+
+        if (tasks.length) {
+            await Promise.all(tasks);
+        }
+
+        return values;
+    }
+
+    mset (pairs: Array<[string, StorageValue]>): Promise<void> {
+        return this.forEachLayer(layer => layer.mset(pairs));
+    }
+
+    sync (key: string): Promise<StorageValue> {
+        return this.msync([key]).then(values => values[0]);
+    }
+
+    get (key: string): Promise<StorageValue>{
+        return this.mget([key]).then(values => values[0]);
+    }
+
+    set (key: string, value: StorageValue): Promise<void>{
+        return this.forEachLayer(layer => layer.set(key, value));
+    }
+
+
+    private layer (n): Layer {
+        return n < 0
+            ? this.layers[this.layersLength + n]
+            : this.layers[n];
+    }
+
+    private forEachLayer (fn: (layer: Layer)=> any): Promise<any> {
+        return Promise.all(this.layers.map(fn));
     }
 
     private get layersLength(){
         return this.layers.length;
     }
 
-    withLayer(options: CreateStorageOptions){
-        const storage = createStorage(options);
-        this.layers.push(storage);
-        return this;
-    }
-
     // Recursively read cached values
     // or deep down to lower cache layer if there is at least a key is not cached.
     // @param {Array<Promise>} tasks Array of set tasks of the previous job.
-    private async traverseGet (index, keys, tasks) {
+    private async traverseGet (index: number, keys: string[], tasks): Promise<Array<StorageValue>> {
         const layer = this.layers[index];
-        const values = await this.mget(...keys)
+        const values = await layer.mget(keys);
 
         if (++ index >= this.layersLength) {
-            return values
+            return values;
         }
 
         const keyIndexes = []
-        const keysOfMissedValues = values.reduce((missed, value, i) => {
-            if (this._isNotFound(value)) {
-                keyIndexes.push(i)
-                missed.push(keys[i])
+        const keysOfMissedValues = values.reduce<string[]>((missed, value, i) => {
+            if (isUnset(value)) {
+                keyIndexes.push(i);
+                missed.push(keys[i]);
             }
 
-            return missed
+            return missed;
         }, [])
 
         if (!keysOfMissedValues.length) {
-            return values
+            return values;
         }
 
-        const valuesFromLowerLayer = await this.traverseGet(
-            index, keysOfMissedValues, tasks)
+        const valuesFromLowerLayer = await this.traverseGet(index, keysOfMissedValues, tasks);
 
-        const keyValuePairsToSet = []
+        const keyValuePairsToSet: Array<[string, StorageValue]> = [];
         valuesFromLowerLayer.forEach((value, i) => {
-            if (this.isNotFound(value)) {
+            if (isUnset(value)) {
                 return
             }
 
             // Update old values
-            values[keyIndexes[i]] = value
-            const key = keysOfMissedValues[i]
-            keyValuePairsToSet.push([key, value])
-        })
+            values[keyIndexes[i]] = value;
+            const key = keysOfMissedValues[i];
+            keyValuePairsToSet.push([key, value]);
+        });
 
         if (keyValuePairsToSet.length) {
             // Update the cache of the current layer
-            tasks.push(layer.mset(...keyValuePairsToSet))
+            tasks.push(layer.mset(keyValuePairsToSet));
         }
 
-        return values
+        return values;
     }
-
-    async mget (...keys) {
-        if (!keys.length) {
-            return []
-        }
-
-        const tasks = []
-        const values = await this.traverseGet(0, keys, tasks)
-
-        if (tasks.length) {
-            await Promise.all(tasks)
-        }
-
-        return values
-    }
-
-    clear(base: string | undefined, opts: TransactionOptions | undefined): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    dispose(): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    get(key: string, opts: TransactionOptions | undefined): Promise<StorageValue> {
-
-        return Promise.resolve(undefined);
-    }
-
-    getItemRaw(key: string, opts: TransactionOptions | undefined): Promise<any> {
-        return Promise.resolve(undefined);
-    }
-
-    getKeys(base: string | undefined, opts: TransactionOptions | undefined): Promise<string[]> {
-        return Promise.resolve([]);
-    }
-
-    getMeta(key: string, opts: (TransactionOptions & { nativeOnly?: boolean }) | boolean | undefined): MaybePromise<StorageMeta> {
-        return undefined;
-    }
-
-    getMount(key: string | undefined): { base: string; driver: Driver } {
-        return {base: "", driver: undefined};
-    }
-
-    getMounts(base: string | undefined, options: { parents?: boolean } | undefined): { base: string; driver: Driver }[] {
-        return [];
-    }
-
-    hasItem(key: string, opts: TransactionOptions | undefined): Promise<boolean> {
-        return Promise.resolve(false);
-    }
+    
 
 
-
-    removeItem(key: string, opts: (TransactionOptions & { removeMata?: boolean }) | boolean | undefined): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-
-
-    setItem(key: string, value: StorageValue, opts: TransactionOptions | undefined): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    setItemRaw(key: string, value: any, opts: TransactionOptions | undefined): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    setMeta(key: string, value: StorageMeta, opts: TransactionOptions | undefined): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-
-    unwatch(): Promise<void> {
-        return Promise.resolve(undefined);
-    }
-
-    watch(callback: WatchCallback): Promise<Unwatch> {
-        return Promise.resolve(undefined);
-    }
 
 }

@@ -1,1 +1,3 @@
-const isNotFound = (value:any)
+const isUnset = (value: any): boolean => value === undefined;
+
+export { isUnset }
