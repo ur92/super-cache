@@ -1,0 +1,1 @@
+const isNotFound = (value:any)
