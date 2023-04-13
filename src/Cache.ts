@@ -5,7 +5,6 @@ import {
 import {isUnset} from "./utils";
 import Layer from "./Layer";
 import IStorage, {StorageValue} from "./types/IStorage";
-import {a} from "unstorage/dist/types-bb85dfb7";
 
 type TransactionOptions = Record<string, any>;
 
