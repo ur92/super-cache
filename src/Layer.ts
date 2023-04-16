@@ -1,4 +1,10 @@
-import {default as IStorage, TransactionOptions, StorageValue, WatchCallback, Unwatch} from "./types/IStorage";
+import {
+    default as IStorage,
+    TransactionOptions,
+    StorageValue,
+    WatchCallback,
+    Unwatch,
+} from './types/IStorage';
 
 export default class Layer {
     private storage: IStorage;
@@ -7,21 +13,24 @@ export default class Layer {
         this.storage = storage;
     }
 
-    async mset(keyValuePairs: Array<[string, StorageValue]>): Promise<void> {
-        const tasks = Object.keys(keyValuePairs).map(key => {
-            return this.set(key, keyValuePairs[key])
+    async mset(keyValuePairs: Array<[string, StorageValue]>, options?: TransactionOptions): Promise<void> {
+        const tasks = keyValuePairs.map(([key, value]) => {
+            return this.set(key, value, options);
         });
         await Promise.all(tasks);
     }
 
-    async mget(keys: string[]): Promise<Array<StorageValue>> {
-        const tasks = keys.map(key => {
-            return this.get(key);
+    async mget(keys: string[], options?: TransactionOptions): Promise<Array<StorageValue>> {
+        const tasks = keys.map((key) => {
+            return this.get(key, options);
         });
-        await Promise.all(tasks);
+        return await Promise.all(tasks);
     }
 
-    async clear(base?: string, opts?: TransactionOptions | undefined): Promise<void> {
+    async clear(
+        base?: string,
+        opts?: TransactionOptions | undefined
+    ): Promise<void> {
         return this.storage.clear(base, opts);
     }
 
@@ -33,20 +42,27 @@ export default class Layer {
         return this.storage.getItem(key, opts);
     }
 
-    async getKeys(base: string | undefined, opts?: TransactionOptions): Promise<string[]> {
-        return this.storage.getKeys(base);
+    async getKeys(
+        base?: string,
+        opts?: TransactionOptions
+    ): Promise<string[]> {
+        return this.storage.getKeys(base, opts);
     }
 
     async has(key: string, opts?: TransactionOptions): Promise<boolean> {
         return this.storage.hasItem(key, opts);
     }
 
-    async remove(key: string, opts?: (TransactionOptions)): Promise<void> {
+    async remove(key: string, opts?: TransactionOptions): Promise<void> {
         return this.storage.removeItem(key, opts);
     }
 
-    async set(key: string, value: StorageValue, opts?: TransactionOptions): Promise<void> {
-        return this.storage.setItem(key, opts);
+    async set(
+        key: string,
+        value: StorageValue,
+        opts?: TransactionOptions
+    ): Promise<void> {
+        return this.storage.setItem(key, value, opts);
     }
 
     async unwatch(): Promise<void> {
@@ -56,6 +72,4 @@ export default class Layer {
     async watch(callback: WatchCallback): Promise<Unwatch> {
         return this.storage.watch(callback);
     }
-
-
 }

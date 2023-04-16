@@ -16,6 +16,7 @@
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\" --list-different",
     "test:unit": "jest",
+    "test:unit:coverage": "jest --coverage",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest --watch"
   },
@@ -28,7 +29,9 @@
     "README.md"
   ],
   "devDependencies": {
+    "@jest/globals": "^29.5.0",
     "@types/debug": "^4.1.7",
+    "@types/jest": "^29.5.0",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
     "eslint": "^8.37.0",
@@ -38,6 +41,7 @@
     "jest": "^29.5.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.3"
   },
@@ -46,7 +50,8 @@
     "unstorage": "^1.4.1"
   },
   "prettier": {
-    "singleQuote": true
+    "singleQuote": true,
+    "tabWidth": 4
   },
   "nyc": {
     "extends": "@istanbuljs/nyc-config-typescript",
