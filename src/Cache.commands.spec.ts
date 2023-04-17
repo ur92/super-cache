@@ -19,7 +19,7 @@ const mockLayer = (data) => ({
     })
 } as any);
 
-describe("Cache", () => {
+describe("Cache Commands", () => {
     let cache: Cache;
 
     beforeEach(() => {

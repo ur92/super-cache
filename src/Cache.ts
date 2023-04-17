@@ -3,15 +3,18 @@ import { isUnset, requireStorage } from './utils';
 import Layer from './Layer';
 import IStorage from './types/IStorage';
 import {CreateLayerOptions} from "./types/ILayerOptions";
-import {StorageValue} from "./types/common";
+import {NamespaceProvider, StorageValue} from "./types/common";
+import Namespace from "./Namespace";
 
 type TransactionOptions = Record<string, any>;
 
 export default class Cache {
     private layers: Array<Layer>;
+    private namespace: Namespace;
 
     constructor() {
         this.layers = [];
+        this.namespace = new Namespace();
     }
 
     withLayer(layer?: Layer);
@@ -28,8 +31,8 @@ export default class Cache {
         return this;
     }
 
-    withNamespace<T extends Record<string, any>>(namespaceProvider: (params: T)=> string, params: T){
-
+    withNamespace<T extends Record<string, any>>(namespaceProvider: NamespaceProvider<T>, separator?:string){
+        this.namespace.setProvider(namespaceProvider, separator);
     }
 
     withProvider(){
@@ -60,13 +63,15 @@ export default class Cache {
     async mget(keys: string[]): Promise<StorageValue>;
     @requireStorage
     async mget(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
-        const keysToFetch = Array.isArray(firstArg)? firstArg: Array(firstArg,...rest);
-        if (!keysToFetch.length) {
+        const _keys = Array.isArray(firstArg)? firstArg: Array(firstArg,...rest);
+        const fullKeys = await this.namespace.withNamespace(_keys);
+
+        if (!fullKeys.length) {
             return [];
         }
 
         const tasks = [];
-        const values = await this.traverseGet(0, keysToFetch, tasks);
+        const values = await this.traverseGet(0, fullKeys, tasks);
 
         if (tasks.length) {
             await Promise.all(tasks);
