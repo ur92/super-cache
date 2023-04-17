@@ -1,8 +1,9 @@
 import { createStorage, CreateStorageOptions } from 'unstorage';
 import { isUnset, requireStorage } from './utils';
 import Layer from './Layer';
-import IStorage, { StorageValue } from './types/IStorage';
+import IStorage from './types/IStorage';
 import {CreateLayerOptions} from "./types/ILayerOptions";
+import {StorageValue} from "./types/common";
 
 type TransactionOptions = Record<string, any>;
 
@@ -13,15 +14,26 @@ export default class Cache {
         this.layers = [];
     }
 
-    withLayer(options?: CreateLayerOptions) {
-        const storage = createStorage(options);
-        return this.withStorageLayer(storage);
-    }
-
-    private withStorageLayer(storage: IStorage) {
-        const layer = new Layer(storage);
+    withLayer(layer?: Layer);
+    withLayer(options?: CreateLayerOptions);
+    withLayer(layerOrOptions: Layer | CreateLayerOptions = {}) {
+        let layer: Layer;
+        if(layerOrOptions instanceof Layer){
+            layer = layerOrOptions;
+        }
+        else{
+            layer = new Layer(layerOrOptions);
+        }
         this.layers.push(layer);
         return this;
+    }
+
+    withNamespace<T extends Record<string, any>>(namespaceProvider: (params: T)=> string, params: T){
+
+    }
+
+    withProvider(){
+
     }
 
     @requireStorage

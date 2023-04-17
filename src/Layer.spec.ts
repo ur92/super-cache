@@ -1,10 +1,9 @@
 import Layer from './Layer';
 import IStorage, {
-    StorageValue,
-    TransactionOptions,
     WatchCallback,
     Unwatch,
 } from './types/IStorage';
+import {StorageValue, TransactionOptions} from "./types/common";
 
 describe('Layer', () => {
     let storage: IStorage;
@@ -22,7 +21,7 @@ describe('Layer', () => {
             unwatch: jest.fn(),
             watch: jest.fn(),
         };
-        layer = new Layer(storage);
+        layer = new Layer({}, storage);
     });
 
     describe('mset', () => {

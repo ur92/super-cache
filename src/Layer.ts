@@ -1,15 +1,20 @@
 import {
     default as IStorage,
-    TransactionOptions,
-    StorageValue,
     WatchCallback,
     Unwatch,
 } from './types/IStorage';
+import {StorageValue, TransactionOptions} from "./types/common";
+import {createStorage} from "unstorage";
+import {CreateLayerOptions} from "./types";
 
 export default class Layer {
     private storage: IStorage;
 
-    constructor(storage: IStorage) {
+    constructor(options: CreateLayerOptions = {}, storage?: IStorage){
+        if (!storage){
+            storage = createStorage(options);
+        }
+
         this.storage = storage;
     }
 

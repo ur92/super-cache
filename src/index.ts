@@ -1,6 +1,10 @@
 export {default as Cache } from './Cache';
 export {default as Layer } from './Layer';
 export * from './types/IStorage';
+export {IProvider} from "./types";
+export {MaybePromise} from "./types";
+export {TransactionOptions} from "./types";
+export {StorageValue} from "./types";
 //
 // import redis from 'unstorage/drivers/redis';
 // import lruCache from 'unstorage/drivers/lru-cache';

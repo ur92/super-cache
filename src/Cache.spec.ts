@@ -2,12 +2,7 @@ import Cache from "./Cache";
 import Layer from "./Layer";
 import {createStorage} from "unstorage";
 import memoryDriver from "unstorage/drivers/memory";
-import {StorageValue, TransactionOptions} from "./types/IStorage";
-
-// Mocking the `unstorage` stuff
-jest.mock("unstorage");
-jest.mock("unstorage/drivers/memory");
-const mockedCreateStorage = createStorage as jest.MockedFunction<typeof createStorage>;
+import {StorageValue, TransactionOptions} from "./types/common";
 
 const mockLayer = (data) => ({
     mget: jest.fn(async function (keys: string[]) {
@@ -42,23 +37,18 @@ describe("Cache", () => {
     });
 
     describe("withLayer", () => {
-        it("should create a new layer with default options", () => {
-            mockedCreateStorage.mockReturnValueOnce({} as any);
-            cache.withLayer();
-            expect(mockedCreateStorage).toHaveBeenCalledTimes(1);
-            expect(mockedCreateStorage).toHaveBeenCalledWith(undefined);
+        it("should create a new layer by passed options", () => {
+            cache.withLayer({});
             expect(cache["layers"]).toHaveLength(1);
             expect(cache["layers"][0]).toBeInstanceOf(Layer);
         });
 
-        it("should create a new layer with custom options", () => {
-            const options = {driver: memoryDriver()};
-            mockedCreateStorage.mockReturnValueOnce({} as any);
-            cache.withLayer(options);
-            expect(mockedCreateStorage).toHaveBeenCalledTimes(1);
-            expect(mockedCreateStorage).toHaveBeenCalledWith(options);
+        it("should add a custom layer instance", () => {
+            let layer = new Layer({});
+            cache.withLayer(layer);
             expect(cache["layers"]).toHaveLength(1);
             expect(cache["layers"][0]).toBeInstanceOf(Layer);
+            expect(cache["layers"][0]).toEqual(layer);
         });
     });
 
@@ -154,7 +144,6 @@ describe("Cache", () => {
 
             it('should keep layer priority', async () => {
                 await cache.set('foo', 'bar');
-
                 //base layer
                 await layers[0].mset([['key0', 'val0']]);
                 const result3 = await cache.mget('key0', 'key1', 'key2');
