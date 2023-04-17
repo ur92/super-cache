@@ -148,17 +148,25 @@ describe("Cache", () => {
                 //mset
                 expect(layers[0].mset).toHaveBeenCalledWith([['foo', 'bar']]);
                 expect(layers[1].mset).toHaveBeenCalledWith([['foo', 'bar']]);
+                //negative
                 expect(layers[2].mset).not.toHaveBeenCalled();
             });
 
             it('should keep layer priority', async () => {
                 await cache.set('foo', 'bar');
-                await layers[0].mset([['key0', 'val0']]);
-                await layers[1].mset([['key0', 'val1'], ['key1', 'key1']]);
-                await layers[2].mset([['key0', 'val2'], ['key1', 'val2'], ['key2', 'val2']]);
 
+                //base layer
+                await layers[0].mset([['key0', 'val0']]);
+                const result3 = await cache.mget('key0', 'key1', 'key2');
+                expect(result3).toEqual(['val0', undefined, undefined]);
+                //second layer
+                await layers[1].mset([['key0', 'val1'], ['key1', 'val1']]);
+                const result2 = await cache.mget('key0', 'key1', 'key2');
+                expect(result2).toEqual(['val0', 'val1', undefined]);
+                //deepest layer
+                await layers[2].mset([['key0', 'val2'], ['key1', 'val2'], ['key2', 'val2']]);
                 const result = await cache.mget('key0', 'key1', 'key2');
-                expect(result).toEqual(['val0', 'key1', 'val2']);
+                expect(result).toEqual(['val0', 'val1', 'val2']);
             });
         });
 
@@ -189,9 +197,14 @@ describe("Cache", () => {
         });
 
         it('should return the value for the provided key', async () => {
+            // negative
+            expect(await cache['layers'][0].mget([key])).toEqual([undefined]);
+            // sync
             const result = await cache.sync(key);
             expect(result).toEqual(value);
+            // positive
             expect(await cache['layers'][0].mget([key])).toEqual([value]);
+
         });
     });
 
