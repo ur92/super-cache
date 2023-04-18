@@ -1,8 +1,5 @@
 import Layer from './Layer';
-import IStorage, {
-    WatchCallback,
-    Unwatch,
-} from './types/IStorage';
+import IStorage from './types/IStorage';
 import {StorageValue, TransactionOptions} from "./types/common";
 
 describe('Layer', () => {

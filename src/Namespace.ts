@@ -1,12 +1,8 @@
 import {createStorage, joinKeys, Storage} from "unstorage";
 import hash from 'object-hash';
 import {NamespaceContext, NamespaceProvider, NamespaceSeparator, StorageValue} from "./types";
-import {a} from "unstorage/dist/types-bb85dfb7";
 
-type KeysOrKeyValuePairs = Array<[string, StorageValue]> | Record<string, StorageValue>;
 type RecordLike<K extends keyof any, V> = Record<K, V> | Array<[K, V]>;
-type ArrayOrRecord<K extends keyof any, V, T extends RecordLike<K, V>> = T extends Array<[K, V]> ? Array<[K, V]> : Record<K, V>;
-// type ArrayOrRecord<K extends keyof any,V,T extends RecordLike<K,V>> = T extends Array<[K, V]> ? Array<[K, V]> : Record<K, V>;
 
 export default class Namespace {
     private separator = ":";
