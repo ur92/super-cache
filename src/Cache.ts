@@ -1,4 +1,3 @@
-import {createStorage, CreateStorageOptions} from 'unstorage';
 import {isUnset, requireStorage} from './utils';
 import Layer from './Layer';
 import {CreateLayerOptions} from "./types/ILayerOptions";

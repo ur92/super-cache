@@ -1,7 +1,5 @@
 import Cache from "./Cache";
 import Layer from "./Layer";
-import {createStorage} from "unstorage";
-import memoryDriver from "unstorage/drivers/memory";
 import {StorageValue, TransactionOptions} from "./types/common";
 
 const mockLayer = (data) => ({

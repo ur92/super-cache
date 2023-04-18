@@ -1,4 +1,4 @@
-import {createStorage, joinKeys, Storage} from "unstorage";
+import {createStorage, Storage} from "unstorage";
 import hash from 'object-hash';
 import {NamespaceContext, NamespaceProvider, NamespaceSeparator, StorageValue} from "./types";
 
