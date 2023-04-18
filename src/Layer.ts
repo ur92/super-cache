@@ -12,7 +12,7 @@ export default class Layer {
 
     constructor(options: CreateLayerOptions = {}, storage?: IStorage){
         if (!storage){
-            storage = createStorage(options);
+            storage = createStorage(options)
         }
 
         this.storage = storage;

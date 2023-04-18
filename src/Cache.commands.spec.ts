@@ -38,14 +38,14 @@ describe("Cache Commands", () => {
 
     describe("withLayer", () => {
         it("should create a new layer by passed options", () => {
-            cache.withLayer({});
+            cache.pushLayer({});
             expect(cache["layers"]).toHaveLength(1);
             expect(cache["layers"][0]).toBeInstanceOf(Layer);
         });
 
         it("should add a custom layer instance", () => {
             let layer = new Layer({});
-            cache.withLayer(layer);
+            cache.pushLayer(layer);
             expect(cache["layers"]).toHaveLength(1);
             expect(cache["layers"][0]).toBeInstanceOf(Layer);
             expect(cache["layers"][0]).toEqual(layer);
@@ -54,7 +54,7 @@ describe("Cache Commands", () => {
 
     describe("msync", () => {
         beforeEach(function () {
-            cache.withLayer();
+            cache.pushLayer();
         });
         it("should read keys from last layer and update lower layers", async () => {
             const keys = ["key1", "key2"];

@@ -1,12 +1,10 @@
-import { createStorage, CreateStorageOptions } from 'unstorage';
-import { isUnset, requireStorage } from './utils';
+import {createStorage, CreateStorageOptions} from 'unstorage';
+import {isUnset, requireStorage} from './utils';
 import Layer from './Layer';
-import IStorage from './types/IStorage';
 import {CreateLayerOptions} from "./types/ILayerOptions";
-import {NamespaceProvider, StorageValue} from "./types/common";
+import {NamespaceContext, NamespaceProvider, StorageValue} from "./types/common";
 import Namespace from "./Namespace";
 
-type TransactionOptions = Record<string, any>;
 
 export default class Cache {
     private layers: Array<Layer>;
@@ -17,38 +15,42 @@ export default class Cache {
         this.namespace = new Namespace();
     }
 
-    withLayer(layer?: Layer);
-    withLayer(options?: CreateLayerOptions);
-    withLayer(layerOrOptions: Layer | CreateLayerOptions = {}) {
+    pushLayer(layer?: Layer);
+    pushLayer(options?: CreateLayerOptions);
+    pushLayer(layerOrOptions: Layer | CreateLayerOptions = {}) {
         let layer: Layer;
-        if(layerOrOptions instanceof Layer){
+        if (layerOrOptions instanceof Layer) {
             layer = layerOrOptions;
-        }
-        else{
+        } else {
             layer = new Layer(layerOrOptions);
         }
         this.layers.push(layer);
         return this;
     }
 
-    withNamespace<T extends Record<string, any>>(namespaceProvider: NamespaceProvider<T>, separator?:string){
-        this.namespace.setProvider(namespaceProvider, separator);
+    setNamespace<T extends NamespaceContext>(context: T, provider: NamespaceProvider<T>, separator?: string) {
+        this.namespace.setProvider(context, provider, separator);
     }
 
-    withProvider(){
+    withProvider() {
 
     }
 
+    async msync(...keys: string[]): Promise<StorageValue>;
+    async msync(keys: string[]): Promise<StorageValue>;
     @requireStorage
-    async msync(keys: string[]): Promise<Array<StorageValue>> {
-        const values = await this.layer(-1).mget(keys);
+    async msync(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
+        const keys = Array.isArray(firstArg) ? firstArg : Array(firstArg, ...rest);
+        const fullKeys = await this.namespace.addNamespaceToKeys(keys);
+
+        const values = await this.layer(-1).mget(fullKeys);
         const pairs = [];
         values.forEach((value, i) => {
             if (isUnset(value)) {
                 return;
             }
 
-            pairs.push([keys[i], value]);
+            pairs.push([fullKeys[i], value]);
         });
 
         const tasks = this.layers
@@ -63,8 +65,8 @@ export default class Cache {
     async mget(keys: string[]): Promise<StorageValue>;
     @requireStorage
     async mget(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
-        const _keys = Array.isArray(firstArg)? firstArg: Array(firstArg,...rest);
-        const fullKeys = await this.namespace.withNamespace(_keys);
+        const keys = Array.isArray(firstArg) ? firstArg : Array(firstArg, ...rest);
+        const fullKeys = await this.namespace.addNamespaceToKeys(keys);
 
         if (!fullKeys.length) {
             return [];
@@ -81,8 +83,16 @@ export default class Cache {
     }
 
     @requireStorage
-    async mset(pairs: Record<string, StorageValue>  | Array<[string, StorageValue]>): Promise<void>{
-        const pairsToUpdate = Array.isArray(pairs)? pairs: Object.entries<StorageValue>(pairs);
+    async mset(pairs: Record<string, StorageValue> | Array<[string, StorageValue]>): Promise<void> {
+        const fullPairs = await this.namespace.addNamespaceToPairs(pairs)
+
+        let pairsToUpdate;
+        if(Array.isArray(fullPairs)){
+            pairsToUpdate = fullPairs;
+        }
+        else{
+            pairsToUpdate = Object.entries<StorageValue>(fullPairs);
+        }
         return await this.forEachLayer((layer) => layer.mset(pairsToUpdate));
     }
 
@@ -107,54 +117,66 @@ export default class Cache {
         keys: string[],
         tasks
     ): Promise<Array<StorageValue>> {
+        if(this.noMoreLayers(index)) return [];
+
         const layer = this.layers[index];
         const values = await layer.mget(keys);
 
-        if (++index >= this.layersLength) {
+        const missedKeys = this.getMissedKeys(values, keys);
+
+        if (this.isAllKeysFound(missedKeys)) {
             return values;
         }
 
-        const keyIndexes = [];
-        const keysOfMissedValues = values.reduce<string[]>(
-            (missed, value, i) => {
-                if (isUnset(value)) {
-                    keyIndexes.push(i);
-                    missed.push(keys[i]);
-                }
-
-                return missed;
-            },
-            []
-        );
-
-        if (!keysOfMissedValues.length) {
-            return values;
-        }
-
-        const valuesFromLowerLayer = await this.traverseGet(
-            index,
-            keysOfMissedValues,
+        const valuesFromHigherLayer = await this.traverseGet(
+            ++index,
+            missedKeys.keys,
             tasks
         );
 
+        const keyValuePairsToSet = this.mergeHigherLayerValues(valuesFromHigherLayer, values, missedKeys);
+
+        if (keyValuePairsToSet.length) {
+            // produce update task of the current layer
+            tasks.push(layer.mset(keyValuePairsToSet));
+        }
+
+        return values;
+    }
+
+    private getMissedKeys(values: Array<StorageValue>, keys: string[]) {
+        const indexes: number[] = [];
+        const missedKeys = values.reduce<string[]>((missed, value, i) => {
+            if (isUnset(value)) {
+                indexes.push(i);
+                missed.push(keys[i]);
+            }
+            return missed;
+        }, []);
+        return {indexes, keys: missedKeys};
+    }
+
+    private noMoreLayers(index: number) {
+        return index >= this.layersLength;
+    }
+
+    private mergeHigherLayerValues(valuesFromLowerLayer: Array<StorageValue>, values: Array<StorageValue>, missedKeys: {indexes: number[], keys: string[]}) {
+        const {indexes, keys} = missedKeys;
         const keyValuePairsToSet: Array<[string, StorageValue]> = [];
         valuesFromLowerLayer.forEach((value, i) => {
             if (isUnset(value)) {
                 return;
             }
-
             // Update old values
-            values[keyIndexes[i]] = value;
-            const key = keysOfMissedValues[i];
+            values[indexes[i]] = value;
+            const key = keys[i];
             keyValuePairsToSet.push([key, value]);
         });
+        return keyValuePairsToSet;
+    }
 
-        if (keyValuePairsToSet.length) {
-            // Update the cache of the current layer
-            tasks.push(layer.mset(keyValuePairsToSet));
-        }
-
-        return values;
+    private isAllKeysFound(keysOfMissedValues: {indexes: number[], keys: string[]}) {
+        return !keysOfMissedValues.keys.length;
     }
 
     private get layersLength() {
