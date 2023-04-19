@@ -1,29 +1,38 @@
 import {isUnset, requireStorage} from './utils';
-import Layer from './Layer';
+import StorageLayer from './StorageLayer';
 import {CreateLayerOptions} from "./types/ILayerOptions";
-import {NamespaceContext, NamespaceProvider, StorageValue} from "./types/common";
+import {DriverType, NamespaceContext, NamespaceProvider, StorageValue, TransactionOptions} from "./types/common";
 import Namespace from "./Namespace";
+import ValuesProvider from "./ValuesProvider";
+import {GettableItem, IMStorage, IProvider, IStorage} from "./types";
 
 
 export default class Cache {
-    private layers: Array<Layer>;
+    private storageLayers: Array<StorageLayer>;
     private namespace: Namespace;
+    private valuesProvider: ValuesProvider;
+
 
     constructor() {
-        this.layers = [];
+        this.storageLayers = [];
+        this.valuesProvider = new ValuesProvider();
         this.namespace = new Namespace();
     }
 
-    pushLayer(layer?: Layer);
-    pushLayer(options?: CreateLayerOptions);
-    pushLayer(layerOrOptions: Layer | CreateLayerOptions = {}) {
-        let layer: Layer;
-        if (layerOrOptions instanceof Layer) {
-            layer = layerOrOptions;
+    addStorage(driver?: DriverType, options?: CreateLayerOptions);
+    addStorage(storage?: StorageLayer);
+    addStorage(driverOrStorage: DriverType | StorageLayer, options: CreateLayerOptions = {}) {
+        let storageLayer: StorageLayer;
+        if (!driverOrStorage) {
+            storageLayer = new StorageLayer();
         } else {
-            layer = new Layer(layerOrOptions);
+            if (typeof driverOrStorage === 'string') {
+                storageLayer = new StorageLayer(driverOrStorage, options);
+            } else {
+                storageLayer = driverOrStorage;
+            }
         }
-        this.layers.push(layer);
+        this.storageLayers.push(storageLayer);
         return this;
     }
 
@@ -31,8 +40,8 @@ export default class Cache {
         this.namespace.setProvider(context, provider, separator);
     }
 
-    withProvider() {
-
+    addValueProvider(base: string, getItem: GettableItem<StorageValue>, hasItem?: GettableItem<boolean>) {
+        this.valuesProvider.add(base, getItem, hasItem);
     }
 
     async msync(...keys: string[]): Promise<StorageValue>;
@@ -52,7 +61,7 @@ export default class Cache {
             pairs.push([fullKeys[i], value]);
         });
 
-        const tasks = this.layers
+        const tasks = this.storageLayers
             .slice(0, -1)
             .map((layer) => layer.mset(pairs));
 
@@ -86,10 +95,9 @@ export default class Cache {
         const fullPairs = await this.namespace.addNamespaceToPairs(pairs)
 
         let pairsToUpdate;
-        if(Array.isArray(fullPairs)){
+        if (Array.isArray(fullPairs)) {
             pairsToUpdate = fullPairs;
-        }
-        else{
+        } else {
             pairsToUpdate = Object.entries<StorageValue>(fullPairs);
         }
         return await this.forEachLayer((layer) => layer.mset(pairsToUpdate));
@@ -107,7 +115,7 @@ export default class Cache {
 
     @requireStorage
     async set(key: string, value: StorageValue): Promise<void> {
-        return this.forEachLayer(async (layer) => await layer.set(key, value));
+        return this.forEachLayer(async (layer) => await layer.setItem(key, value));
     }
 
     @requireStorage
@@ -116,9 +124,9 @@ export default class Cache {
         keys: string[],
         tasks
     ): Promise<Array<StorageValue>> {
-        if(this.noMoreLayers(index)) return [];
+        if (this.noMoreLayers(index)) return [];
 
-        const layer = this.layers[index];
+        const layer = this.storageLayers[index];
         const values = await layer.mget(keys);
 
         const missedKeys = this.getMissedKeys(values, keys);
@@ -159,7 +167,7 @@ export default class Cache {
         return index >= this.layersLength;
     }
 
-    private mergeHigherLayerValues(valuesFromLowerLayer: Array<StorageValue>, values: Array<StorageValue>, missedKeys: {indexes: number[], keys: string[]}) {
+    private mergeHigherLayerValues(valuesFromLowerLayer: Array<StorageValue>, values: Array<StorageValue>, missedKeys: { indexes: number[], keys: string[] }) {
         const {indexes, keys} = missedKeys;
         const keyValuePairsToSet: Array<[string, StorageValue]> = [];
         valuesFromLowerLayer.forEach((value, i) => {
@@ -174,19 +182,19 @@ export default class Cache {
         return keyValuePairsToSet;
     }
 
-    private isAllKeysFound(keysOfMissedValues: {indexes: number[], keys: string[]}) {
+    private isAllKeysFound(keysOfMissedValues: { indexes: number[], keys: string[] }) {
         return !keysOfMissedValues.keys.length;
     }
 
     private get layersLength() {
-        return this?.layers?.length ?? 0;
+        return this?.storageLayers?.length ?? 0;
     }
 
-    private layer(n): Layer {
-        return n < 0 ? this.layers[this.layersLength + n] : this.layers[n];
+    private layer(n): StorageLayer {
+        return n < 0 ? this.storageLayers[this.layersLength + n] : this.storageLayers[n];
     }
 
-    private async forEachLayer(fn: (layer: Layer) => any): Promise<any> {
-        return await Promise.all(this.layers.map(fn));
+    private async forEachLayer(fn: (layer: StorageLayer) => any): Promise<any> {
+        return await Promise.all(this.storageLayers.map(fn));
     }
 }

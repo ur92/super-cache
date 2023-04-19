@@ -1,5 +1,5 @@
 export {default as Cache } from './Cache';
-export {default as Layer } from './Layer';
+export {default as Storage } from './StorageLayer';
 export * from './types/IStorage';
 export {IProvider} from "./types";
 export {MaybePromise} from "./types";

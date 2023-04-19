@@ -1,5 +1,5 @@
 import Cache from "./Cache";
-import Layer from "./Layer";
+import StorageLayer from "./StorageLayer";
 
 describe("Cache Utils", () => {
     let cache: Cache;
@@ -20,11 +20,11 @@ describe("Cache Utils", () => {
         let context = {tenantId: 'hello'};
 
         beforeEach(function () {
-            cache['layers'] = [{
+            cache['storageLayers'] = [{
                 mget,
                 msync,
                 mset
-            }] as unknown as Layer[];
+            }] as unknown as StorageLayer[];
             cache.setNamespace(context, context => {
                 return new Promise((resolve) => {
                     setTimeout(() => {
@@ -40,11 +40,11 @@ describe("Cache Utils", () => {
         });
 
         it('should add namespace to msync keys', async function () {
-            cache['layers'].push({
+            cache['storageLayers'].push({
                 mget,
                 msync,
                 mset
-            } as unknown as Layer);
+            } as unknown as StorageLayer);
             await cache.msync('world');
             expect(mget).toHaveBeenCalledWith(['hello*world']);
             expect(mset).toHaveBeenCalledWith([['hello*world', 'value']]);

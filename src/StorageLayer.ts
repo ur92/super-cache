@@ -1,33 +1,42 @@
 import {
-    default as IStorage,
+    IStorage,
+    IMStorage,
     WatchCallback,
     Unwatch,
 } from './types/IStorage';
-import {StorageValue, TransactionOptions} from "./types/common";
+import {DriverType, StorageValue, TransactionOptions} from "./types/common";
 import {createStorage} from "unstorage";
 import {CreateLayerOptions} from "./types";
 
-export default class Layer {
+export default class StorageLayer implements IMStorage {
     private storage: IStorage;
 
-    constructor(options: CreateLayerOptions = {}, storage?: IStorage){
-        if (!storage){
-            storage = createStorage(options)
+    constructor(driver?: DriverType, options?: CreateLayerOptions);
+    constructor(storage?: IStorage);
+    constructor(driverOrStorage: DriverType | IStorage, options: CreateLayerOptions = {}) {
+        let storage;
+        if (!driverOrStorage) {
+            storage = createStorage();
+        } else {
+            if (typeof driverOrStorage === 'string') {
+                storage = createStorage(options)
+            } else {
+                storage = driverOrStorage;
+            }
         }
-
         this.storage = storage;
     }
 
     async mset(keyValuePairs: Array<[string, StorageValue]>, options?: TransactionOptions): Promise<void> {
         const tasks = keyValuePairs.map(([key, value]) => {
-            return this.set(key, value, options);
+            return this.setItem(key, value, options);
         });
         await Promise.all(tasks);
     }
 
     async mget(keys: string[], options?: TransactionOptions): Promise<Array<StorageValue>> {
         const tasks = keys.map((key) => {
-            return this.get(key, options);
+            return this.getItem(key, options);
         });
         return await Promise.all(tasks);
     }
@@ -43,7 +52,7 @@ export default class Layer {
         return this.storage.dispose();
     }
 
-    async get(key: string, opts?: TransactionOptions): Promise<StorageValue> {
+    async getItem(key: string, opts?: TransactionOptions): Promise<StorageValue> {
         return this.storage.getItem(key, opts);
     }
 
@@ -54,15 +63,15 @@ export default class Layer {
         return this.storage.getKeys(base, opts);
     }
 
-    async has(key: string, opts?: TransactionOptions): Promise<boolean> {
+    async hasItem(key: string, opts?: TransactionOptions): Promise<boolean> {
         return this.storage.hasItem(key, opts);
     }
 
-    async remove(key: string, opts?: TransactionOptions): Promise<void> {
+    async removeItem(key: string, opts?: TransactionOptions): Promise<void> {
         return this.storage.removeItem(key, opts);
     }
 
-    async set(
+    async setItem(
         key: string,
         value: StorageValue,
         opts?: TransactionOptions

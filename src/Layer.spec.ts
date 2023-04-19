@@ -1,10 +1,10 @@
-import Layer from './Layer';
-import IStorage from './types/IStorage';
+import StorageLayer from './StorageLayer';
+import {IStorage} from './types/IStorage';
 import {StorageValue, TransactionOptions} from "./types/common";
 
 describe('Layer', () => {
     let storage: IStorage;
-    let layer: Layer;
+    let layer: StorageLayer;
 
     beforeEach(() => {
         storage = {
@@ -18,7 +18,7 @@ describe('Layer', () => {
             unwatch: jest.fn(),
             watch: jest.fn(),
         };
-        layer = new Layer({}, storage);
+        layer = new StorageLayer(storage);
     });
 
     describe('mset', () => {
@@ -68,7 +68,7 @@ describe('Layer', () => {
 
     describe('get', () => {
         it('calls storage.getItem', async () => {
-            await layer.get('key');
+            await layer.getItem('key');
 
             expect(storage.getItem).toHaveBeenCalledTimes(1);
             expect(storage.getItem).toHaveBeenCalledWith('key', undefined);
@@ -77,7 +77,7 @@ describe('Layer', () => {
         it('passes opts to storage.getItem', async () => {
             const opts: TransactionOptions = {someOption: 'value'};
 
-            await layer.get('key', opts);
+            await layer.getItem('key', opts);
 
             expect(storage.getItem).toHaveBeenCalledTimes(1);
             expect(storage.getItem).toHaveBeenCalledWith('key', opts);
@@ -143,7 +143,7 @@ describe('Layer', () => {
 
     describe('has', () => {
         it('should call storage.hasItem with the correct key and options', async () => {
-            await layer.has('test', { timeout: 1000 });
+            await layer.hasItem('test', { timeout: 1000 });
 
             expect(storage.hasItem).toHaveBeenCalledWith('test', { timeout: 1000 });
         });
@@ -151,7 +151,7 @@ describe('Layer', () => {
         it('should return the result of storage.hasItem', async () => {
             (storage.hasItem as jest.Mock).mockResolvedValue(true);
 
-            const result = await layer.has('test');
+            const result = await layer.hasItem('test');
 
             expect(result).toBe(true);
         });
@@ -159,7 +159,7 @@ describe('Layer', () => {
 
     describe('remove', () => {
         it('should call storage.removeItem with the correct key and options', async () => {
-            await layer.remove('test', { timeout: 1000 });
+            await layer.removeItem('test', { timeout: 1000 });
 
             expect(storage.removeItem).toHaveBeenCalledWith('test', { timeout: 1000 });
         });
@@ -169,7 +169,7 @@ describe('Layer', () => {
         it('should call storage.setItem with the correct key, value, and options', async () => {
             const value: StorageValue = { data: 'test' };
 
-            await layer.set('test', value, { timeout: 1000 });
+            await layer.setItem('test', value, { timeout: 1000 });
 
             expect(storage.setItem).toHaveBeenCalledWith('test', value, { timeout: 1000 });
         });

@@ -5,7 +5,8 @@ type Unwatch = () => MaybePromise<void>;
 type WatchEvent = 'update' | 'remove';
 type WatchCallback = (event: WatchEvent, key: string) => any;
 
-interface IStorage extends IProvider{
+
+interface IStorage extends IProvider {
     setItem: (
         key: string,
         value: StorageValue,
@@ -19,9 +20,15 @@ interface IStorage extends IProvider{
     unwatch: () => Promise<void>;
 }
 
+interface IMStorage extends IStorage {
+    mset(keyValuePairs: Array<[string, StorageValue]>, options?: TransactionOptions): Promise<void>;
+    mget(keys: string[], options?: TransactionOptions): Promise<Array<StorageValue>>;
+}
+
 export {
     WatchEvent,
     WatchCallback,
     Unwatch,
-    IStorage as default,
+    IStorage,
+    IMStorage
 };

@@ -25,7 +25,7 @@ export default class Namespace {
     async addNamespaceToPairs(keyValuePairs: RecordLike<string, StorageValue>): Promise<RecordLike<string, StorageValue>> {
         if (!this.provider) return keyValuePairs;
         let result: RecordLike<string, StorageValue>;
-        const namespace = await this.getNamespace();
+        const namespace = await this.namespace;
         if (Array.isArray(keyValuePairs)) {
             result = keyValuePairs.map<[string, StorageValue]>(([key, value]) => {
                 const fullKey = this.join(key, namespace, this.separator);
@@ -49,18 +49,26 @@ export default class Namespace {
 
         if (!this.provider) return keys;
 
-        const namespace = await this.getNamespace();
+        const namespace = await this.namespace;
         return this.join(keys, namespace, this.separator);
     }
 
-    private async getNamespace(): Promise<string> {
-        let contextHash = this.hash(this.context);
-        let namespace = await this.cache.getItem(contextHash) as string;
-        if (!namespace) {
-            namespace = await this.provider(this.context);
-            await this.cache.setItem(contextHash, namespace);
-        }
-        return namespace;
+    private get namespace(): Promise<string> {
+        return new Promise(async (resolve)=>{
+            const namespace = null;
+            if (!this.provider) return
+            try {
+                let contextHash = this.hash(this.context);
+                let namespace = await this.cache.getItem(contextHash) as string;
+                if (!namespace) {
+                    namespace = await this.provider(this.context);
+                    await this.cache.setItem(contextHash, namespace);
+                }
+                resolve(namespace);
+            } catch (e) {
+                resolve(namespace);
+            }
+        })
     }
 
     private hash(context: any) {

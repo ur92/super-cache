@@ -1,6 +1,10 @@
 import {StorageValue, TransactionOptions} from "./common";
 
-export interface IProvider {
-    hasItem: (key: string, opts?: TransactionOptions) => Promise<boolean>;
-    getItem: (key: string, opts?: TransactionOptions) => Promise<StorageValue>;
+type GettableItem<T> = (key: string, opts?: TransactionOptions) => Promise<T>;
+
+interface IProvider {
+    hasItem: GettableItem<boolean>;
+    getItem: GettableItem<StorageValue>;
 }
+
+export {IProvider, GettableItem};

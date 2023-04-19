@@ -1,5 +1,5 @@
 import Cache from "./Cache";
-import Layer from "./Layer";
+import StorageLayer from "./StorageLayer";
 import {StorageValue, TransactionOptions} from "./types/common";
 
 const mockLayer = (data) => ({
@@ -11,7 +11,7 @@ const mockLayer = (data) => ({
             data[key] = value;
         });
     }),
-    set: jest.fn(async function (key: string, value: StorageValue, opt?: TransactionOptions) {
+    setItem: jest.fn(async function (key: string, value: StorageValue, opt?: TransactionOptions) {
         data[key] = value;
         return Promise.resolve();
     })
@@ -36,47 +36,47 @@ describe("Cache Commands", () => {
 
     describe("withLayer", () => {
         it("should create a new layer by passed options", () => {
-            cache.pushLayer({});
-            expect(cache["layers"]).toHaveLength(1);
-            expect(cache["layers"][0]).toBeInstanceOf(Layer);
+            cache.addStorage()
+            expect(cache["storageLayers"]).toHaveLength(1);
+            expect(cache["storageLayers"][0]).toBeInstanceOf(StorageLayer);
         });
 
         it("should add a custom layer instance", () => {
-            let layer = new Layer({});
-            cache.pushLayer(layer);
-            expect(cache["layers"]).toHaveLength(1);
-            expect(cache["layers"][0]).toBeInstanceOf(Layer);
-            expect(cache["layers"][0]).toEqual(layer);
+            let layer = new StorageLayer();
+            cache.addStorage(layer);
+            expect(cache["storageLayers"]).toHaveLength(1);
+            expect(cache["storageLayers"][0]).toBeInstanceOf(StorageLayer);
+            expect(cache["storageLayers"][0]).toEqual(layer);
         });
     });
 
     describe("msync", () => {
         beforeEach(function () {
-            cache.pushLayer();
+            cache.addStorage();
         });
-        it("should read keys from last layer and update lower layers", async () => {
+        it("should read keys from last layer and update lower storageLayers", async () => {
             const keys = ["key1", "key2"];
             const values: StorageValue[] = ["value1", "value2"];
             const mgetMock = jest.fn().mockResolvedValue(values);
             const msetMock = jest.fn().mockResolvedValue(undefined);
-            const layers = [
+            const storageLayers = [
                 {mget: jest.fn(), mset: msetMock},
                 {mget: mgetMock, mset: jest.fn()},
-            ] as unknown as Layer[];
+            ] as unknown as StorageLayer[];
 
-            cache["layers"] = layers;
+            cache["storageLayers"] = storageLayers;
 
             const result = await cache.msync(keys);
 
-            expect(layers[0].mget).toHaveBeenCalledTimes(0);
-            expect(layers[0].mset).toHaveBeenCalledTimes(1);
-            expect(layers[0].mset).toHaveBeenCalledWith([
+            expect(storageLayers[0].mget).toHaveBeenCalledTimes(0);
+            expect(storageLayers[0].mset).toHaveBeenCalledTimes(1);
+            expect(storageLayers[0].mset).toHaveBeenCalledWith([
                 ["key1", "value1"],
                 ["key2", "value2"],
             ]);
 
-            expect(layers[1].mget).toHaveBeenCalledTimes(1);
-            expect(layers[1].mset).toHaveBeenCalledTimes(0);
+            expect(storageLayers[1].mget).toHaveBeenCalledTimes(1);
+            expect(storageLayers[1].mset).toHaveBeenCalledTimes(0);
 
             expect(result).toEqual(values);
         });
@@ -89,7 +89,7 @@ describe("Cache Commands", () => {
 
     describe('mget', () => {
         beforeEach(function () {
-            cache["layers"] = [mockLayer({})];
+            cache["storageLayers"] = [mockLayer({})];
         });
 
         it('should return an empty array when no keys are provided', async () => {
@@ -120,38 +120,37 @@ describe("Cache Commands", () => {
         });
 
         describe('multi-layer', function () {
-            let layers;
+            let storageLayers;
             beforeEach(function () {
-                layers = [mockLayer({}), mockLayer({}), mockLayer({})];
-                cache["layers"] = layers;
+                storageLayers = [mockLayer({}), mockLayer({}), mockLayer({})];
+                cache["storageLayers"] = storageLayers;
             });
             it('should return values from a the deepest layer ', async () => {
                 //set only on third layer
-                await layers[2].set('foo', 'bar');
+                await storageLayers[2].setItem('foo', 'bar');
                 const result = await cache.mget('foo');
                 expect(result).toEqual(['bar']);
-                expect(layers[0].mget).toHaveBeenCalledWith(['foo']);
-                expect(layers[1].mget).toHaveBeenCalledWith(['foo']);
-                expect(layers[2].mget).toHaveBeenCalledWith(['foo']);
+                expect(storageLayers[0].mget).toHaveBeenCalledWith(['foo']);
+                expect(storageLayers[1].mget).toHaveBeenCalledWith(['foo']);
+                expect(storageLayers[2].mget).toHaveBeenCalledWith(['foo']);
                 //mset
-                expect(layers[0].mset).toHaveBeenCalledWith([['foo', 'bar']]);
-                expect(layers[1].mset).toHaveBeenCalledWith([['foo', 'bar']]);
+                expect(storageLayers[0].mset).toHaveBeenCalledWith([['foo', 'bar']]);
+                expect(storageLayers[1].mset).toHaveBeenCalledWith([['foo', 'bar']]);
                 //negative
-                expect(layers[2].mset).not.toHaveBeenCalled();
+                expect(storageLayers[2].mset).not.toHaveBeenCalled();
             });
 
             it('should keep layer priority', async () => {
-                await cache.set('foo', 'bar');
-                //base layer
-                await layers[0].mset([['key0', 'val0']]);
+                // layer 0
+                await storageLayers[0].mset([['key0', 'val0']]);
                 const result3 = await cache.mget('key0', 'key1', 'key2');
                 expect(result3).toEqual(['val0', undefined, undefined]);
-                //second layer
-                await layers[1].mset([['key0', 'val1'], ['key1', 'val1']]);
+                // layer 1
+                await storageLayers[1].mset([['key0', 'val1'], ['key1', 'val1']]);
                 const result2 = await cache.mget('key0', 'key1', 'key2');
                 expect(result2).toEqual(['val0', 'val1', undefined]);
-                //deepest layer
-                await layers[2].mset([['key0', 'val2'], ['key1', 'val2'], ['key2', 'val2']]);
+                //highest layer
+                await storageLayers[2].mset([['key0', 'val2'], ['key1', 'val2'], ['key2', 'val2']]);
                 const result = await cache.mget('key0', 'key1', 'key2');
                 expect(result).toEqual(['val0', 'val1', 'val2']);
             });
@@ -161,18 +160,18 @@ describe("Cache Commands", () => {
 
     describe('mset', () => {
         beforeEach(function () {
-            cache["layers"] = [mockLayer({}), mockLayer({})];
+            cache["storageLayers"] = [mockLayer({}), mockLayer({})];
         });
 
-        it('should set multiple key-value pairs in all layers', async () => {
+        it('should set multiple key-value pairs in all storageLayers', async () => {
             const pairs = {foo: 'hello', bar: 'world'};
             await cache.mset(pairs);
             // mset
-            expect(cache['layers'][0].mset).toHaveBeenCalledWith([['foo', 'hello'], ['bar', 'world']]);
-            expect(cache['layers'][1].mset).toHaveBeenCalledWith([['foo', 'hello'], ['bar', 'world']]);
+            expect(cache['storageLayers'][0].mset).toHaveBeenCalledWith([['foo', 'hello'], ['bar', 'world']]);
+            expect(cache['storageLayers'][1].mset).toHaveBeenCalledWith([['foo', 'hello'], ['bar', 'world']]);
             // mget
-            expect(await cache['layers'][0].mget(['foo', 'bar'])).toEqual(['hello', 'world']);
-            expect(await cache['layers'][1].mget(['foo', 'bar'])).toEqual(['hello', 'world']);
+            expect(await cache['storageLayers'][0].mget(['foo', 'bar'])).toEqual(['hello', 'world']);
+            expect(await cache['storageLayers'][1].mget(['foo', 'bar'])).toEqual(['hello', 'world']);
         });
     });
 
@@ -180,24 +179,24 @@ describe("Cache Commands", () => {
         const key = 'foo';
         const value = 'hello';
         beforeEach(function () {
-            cache["layers"] = [mockLayer({}), mockLayer({}), mockLayer({[key]: value})];
+            cache["storageLayers"] = [mockLayer({}), mockLayer({}), mockLayer({[key]: value})];
         });
 
         it('should return the value for the provided key', async () => {
             // negative
-            expect(await cache['layers'][0].mget([key])).toEqual([undefined]);
+            expect(await cache['storageLayers'][0].mget([key])).toEqual([undefined]);
             // sync
             const result = await cache.sync(key);
             expect(result).toEqual(value);
             // positive
-            expect(await cache['layers'][0].mget([key])).toEqual([value]);
+            expect(await cache['storageLayers'][0].mget([key])).toEqual([value]);
 
         });
     });
 
     describe('get', () => {
         beforeEach(function () {
-            cache["layers"] = [mockLayer({}), mockLayer({}), mockLayer({})];
+            cache["storageLayers"] = [mockLayer({}), mockLayer({}), mockLayer({})];
         });
 
         it('should return the value for the provided key', async () => {
@@ -211,14 +210,14 @@ describe("Cache Commands", () => {
 
     describe('set', () => {
         beforeEach(function () {
-            cache["layers"] = [mockLayer({}), mockLayer({}), mockLayer({})];
+            cache["storageLayers"] = [mockLayer({}), mockLayer({}), mockLayer({})];
         });
 
-        it('should set the value for the provided key in all layers', async () => {
+        it('should set the value for the provided key in all storageLayers', async () => {
             const key = 'foo';
             const value = 'hello';
             await cache.set(key, value);
-            expect(await cache['layers'][2].mget([key])).toEqual([value]);
+            expect(await cache['storageLayers'][2].mget([key])).toEqual([value]);
         });
     });
 });
