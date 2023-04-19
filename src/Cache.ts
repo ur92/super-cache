@@ -119,6 +119,12 @@ export default class Cache {
     }
 
     @requireStorage
+    async clear(base?: string, opts?: TransactionOptions): Promise<void> {
+        const [fullBase] = await this.namespace.addNamespaceToKeys(base);
+        return this.forEachLayer(async (layer) => await layer.clear(fullBase, opts));
+    }
+
+    @requireStorage
     private async traverseGet(
         index: number,
         keys: string[],

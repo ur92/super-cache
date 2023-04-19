@@ -14,7 +14,8 @@ const mockLayer = (data) => ({
     setItem: jest.fn(async function (key: string, value: StorageValue, opt?: TransactionOptions) {
         data[key] = value;
         return Promise.resolve();
-    })
+    }),
+    clear:jest.fn()
 } as any);
 
 describe("Cache Commands", () => {
@@ -220,4 +221,15 @@ describe("Cache Commands", () => {
             expect(await cache['storageLayers'][2].mget([key])).toEqual([value]);
         });
     });
+
+    describe('clear', () => {
+        beforeEach(function () {
+            cache["storageLayers"] = [mockLayer({}), mockLayer({})];
+        });
+        it('should call clear for all layers', async () => {
+            await cache.clear('token:');
+            expect(cache["storageLayers"][0].clear).toHaveBeenCalledWith('token:', undefined);
+            expect(cache["storageLayers"][1].clear).toHaveBeenCalledWith('token:', undefined);
+        });
+    })
 });
