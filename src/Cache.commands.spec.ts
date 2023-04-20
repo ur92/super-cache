@@ -4,7 +4,7 @@ import {StorageValue, TransactionOptions} from "./types/common";
 
 const mockLayer = (data) => ({
     mget: jest.fn(async function (keys: string[]) {
-        return keys.map((key) => data[key] || undefined);
+        return keys.map((key) => data[key]);
     }),
     mset: jest.fn(async function (pairs: Array<[string, any]>) {
         pairs.forEach(([key, value]) => {
@@ -90,7 +90,8 @@ describe("Cache Commands", () => {
 
     describe('mget', () => {
         beforeEach(function () {
-            cache["storageLayers"] = [mockLayer({})];
+            // cache["storageLayers"] = [mockLayer({})];
+            cache.addStorage();
         });
 
         it('should return an empty array when no keys are provided', async () => {
@@ -197,7 +198,11 @@ describe("Cache Commands", () => {
 
     describe('get', () => {
         beforeEach(function () {
-            cache["storageLayers"] = [mockLayer({}), mockLayer({}), mockLayer({})];
+            cache["storageLayers"] = [mockLayer({})];
+        });
+
+        it('should return undefined for unexciting key', function() {
+            expect(cache.get('sdf')).resolves.toBeUndefined();
         });
 
         it('should return the value for the provided key', async () => {

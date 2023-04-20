@@ -12,7 +12,6 @@ export default class Cache {
     private namespace: Namespace;
     private valuesProvider: ValuesProvider;
 
-
     constructor() {
         this.storageLayers = [];
         this.valuesProvider = new ValuesProvider();
@@ -130,7 +129,9 @@ export default class Cache {
         keys: string[],
         tasks
     ): Promise<Array<StorageValue>> {
-        if (this.noMoreLayers(index)) return [];
+        if (this.noMoreLayers(index)){
+            return this.valuesProvider.getItems(keys);
+        }
 
         const layer = this.storageLayers[index];
         const values = await layer.mget(keys);

@@ -1,7 +1,7 @@
 {
-  "name": "@jfrog/multilayer-cache-nodejs",
+  "name": "super-cache",
   "version": "1.0.0",
-  "description": "",
+  "description": "All around cache solution for nodejs and browser. Supports most of cache drivers, multi-layered cache, namespacing and value injecting.",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -20,8 +20,8 @@
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest --watch"
   },
-  "author": "evgenid",
-  "license": "ISC",
+  "author": "Evgeni Dikerman",
+  "license": "MIT",
   "files": [
     "dist",
     "!**/*.spec.*",
@@ -32,6 +32,7 @@
     "@jest/globals": "^29.5.0",
     "@types/debug": "^4.1.7",
     "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.12",
     "@types/object-hash": "^3.0.2",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
@@ -49,7 +50,7 @@
   "dependencies": {
     "debug": "^4.3.4",
     "object-hash": "^3.0.0",
-    "unstorage": "^1.4.1"
+    "unstorage": "https://github.com/ur92/unstorage/archive/refs/tags/1.6.0.tar.gz"
   },
   "prettier": {
     "singleQuote": true,

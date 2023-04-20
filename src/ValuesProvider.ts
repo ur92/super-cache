@@ -23,6 +23,14 @@ export default class ValuesProvider implements IProvider {
         };
     }
 
+    async getItems(keys: string[], opts?: TransactionOptions): Promise<Array<StorageValue>> {
+        return Promise.all(keys.map(key => this.getItem(key, opts)));
+    }
+
+    async hasItems(keys: string[], opts?: TransactionOptions): Promise<boolean[]> {
+        return Promise.all(keys.map(key => this.hasItem(key, opts)));
+    }
+
     async getItem(key: string, opts?: TransactionOptions): Promise<StorageValue> {
         const provider = this.getProviderByKeyMatch(key);
         return await provider?.getItem(key, opts);

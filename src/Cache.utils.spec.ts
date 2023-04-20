@@ -62,4 +62,21 @@ describe("Cache Utils", () => {
         });
     });
 
+    describe('Value Provider', function () {
+        beforeEach(function () {
+            cache.addStorage();
+            cache.addValueProvider('token:', async(key)=>'token-for-'+key)
+        });
+
+        it('should provide value if value not in cache', async function () {
+            const val = await cache.get('token:bini');
+            expect(val).toBe('token-for-token:bini');
+        });
+
+        it('should store the provided token in the storage layer', async function () {
+            await cache.get('token:bini');
+            expect(cache['storageLayers'][0].getItem('token:bini')).resolves.toBe('token-for-token:bini');
+        });
+    });
+
 });
