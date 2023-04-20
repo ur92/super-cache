@@ -1,12 +1,13 @@
+import {createStorage} from "unstorage";
+
+import {CreateLayerOptions} from "./types";
 import {
-    IStorage,
     IMStorage,
-    WatchCallback,
+    IStorage,
     Unwatch,
+    WatchCallback,
 } from './types/IStorage';
 import {DriverType, StorageValue, TransactionOptions} from "./types/common";
-import {createStorage} from "unstorage";
-import {CreateLayerOptions} from "./types";
 
 export default class StorageLayer implements IMStorage {
     private storage: IStorage;

@@ -1,10 +1,10 @@
-import {isUnset, requireStorage} from './utils';
+import Namespace from "./Namespace";
 import StorageLayer from './StorageLayer';
+import ValuesProvider from "./ValuesProvider";
+import {GettableItem} from "./types";
 import {CreateLayerOptions} from "./types/ILayerOptions";
 import {DriverType, NamespaceContext, NamespaceProvider, StorageValue, TransactionOptions} from "./types/common";
-import Namespace from "./Namespace";
-import ValuesProvider from "./ValuesProvider";
-import {GettableItem, IMStorage, IProvider, IStorage} from "./types";
+import { isUnset, requireStorage } from './utils';
 
 
 export default class Cache {
@@ -47,7 +47,7 @@ export default class Cache {
     async msync(keys: string[]): Promise<StorageValue>;
     @requireStorage
     async msync(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
-        const keys = Array.isArray(firstArg) ? firstArg : Array(firstArg, ...rest);
+        const keys = Array.isArray(firstArg) ? firstArg : [firstArg, ...rest];
         const fullKeys = await this.namespace.addNamespaceToKeys(keys);
 
         const values = await this.layer(-1).mget(fullKeys);
@@ -72,7 +72,7 @@ export default class Cache {
     async mget(keys: string[]): Promise<StorageValue>;
     @requireStorage
     async mget(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
-        const keys = Array.isArray(firstArg) ? firstArg : Array(firstArg, ...rest);
+        const keys = Array.isArray(firstArg) ? firstArg : [firstArg, ...rest];
         const fullKeys = await this.namespace.addNamespaceToKeys(keys);
 
         if (!fullKeys.length) {

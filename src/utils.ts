@@ -1,5 +1,7 @@
 import Cache from './Cache';
-const isUnset = (value: any): boolean => value === undefined;
+const isUnset = (value: any): boolean => {
+    return value === undefined || value === null;
+};
 
 const requireStorage = (target, propertyName, descriptor) => {
     const originalMethod = descriptor.value;
@@ -13,8 +15,6 @@ const requireStorage = (target, propertyName, descriptor) => {
         return originalMethod.apply(this, args);
     };
     return descriptor;
-};
-
-
+}
 
 export { isUnset, requireStorage };

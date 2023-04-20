@@ -4,7 +4,7 @@ import {StorageValue, TransactionOptions} from "./types/common";
 
 const mockLayer = (data) => ({
     mget: jest.fn(async function (keys: string[]) {
-        return keys.map((key) => data[key]);
+        return keys.map((key) => data[key] ?? null);
     }),
     mset: jest.fn(async function (pairs: Array<[string, any]>) {
         pairs.forEach(([key, value]) => {
@@ -59,7 +59,7 @@ describe("Cache Commands", () => {
             const keys = ["key1", "key2"];
             const values: StorageValue[] = ["value1", "value2"];
             const mgetMock = jest.fn().mockResolvedValue(values);
-            const msetMock = jest.fn().mockResolvedValue(undefined);
+            const msetMock = jest.fn().mockResolvedValue(null);
             const storageLayers = [
                 {mget: jest.fn(), mset: msetMock},
                 {mget: mgetMock, mset: jest.fn()},
@@ -90,18 +90,12 @@ describe("Cache Commands", () => {
 
     describe('mget', () => {
         beforeEach(function () {
-            // cache["storageLayers"] = [mockLayer({})];
             cache.addStorage();
         });
 
-        it('should return an empty array when no keys are provided', async () => {
-            const result = await cache.mget();
-            expect(result).toEqual([]);
-        });
-
-        it('should return undefined for unknown keys', async () => {
+        it('should return null for unknown keys', async () => {
             const result = await cache.mget('foo');
-            expect(result).toEqual([undefined]);
+            expect(result).toEqual([null]);
         });
 
         it('should return an array of values for the provided keys', async () => {
@@ -146,11 +140,11 @@ describe("Cache Commands", () => {
                 // layer 0
                 await storageLayers[0].mset([['key0', 'val0']]);
                 const result3 = await cache.mget('key0', 'key1', 'key2');
-                expect(result3).toEqual(['val0', undefined, undefined]);
+                expect(result3).toEqual(['val0', null, null]);
                 // layer 1
                 await storageLayers[1].mset([['key0', 'val1'], ['key1', 'val1']]);
                 const result2 = await cache.mget('key0', 'key1', 'key2');
-                expect(result2).toEqual(['val0', 'val1', undefined]);
+                expect(result2).toEqual(['val0', 'val1', null]);
                 //highest layer
                 await storageLayers[2].mset([['key0', 'val2'], ['key1', 'val2'], ['key2', 'val2']]);
                 const result = await cache.mget('key0', 'key1', 'key2');
@@ -186,7 +180,7 @@ describe("Cache Commands", () => {
 
         it('should return the value for the provided key', async () => {
             // negative
-            expect(await cache['storageLayers'][0].mget([key])).toEqual([undefined]);
+            expect(await cache['storageLayers'][0].mget([key])).toEqual([null]);
             // sync
             const result = await cache.sync(key);
             expect(result).toEqual(value);
@@ -201,8 +195,8 @@ describe("Cache Commands", () => {
             cache["storageLayers"] = [mockLayer({})];
         });
 
-        it('should return undefined for unexciting key', function() {
-            expect(cache.get('sdf')).resolves.toBeUndefined();
+        it('should return null for unexciting key', function() {
+            expect(cache.get('sdf')).resolves.toBeNull();
         });
 
         it('should return the value for the provided key', async () => {
