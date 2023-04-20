@@ -1,4 +1,4 @@
-# Cache Library
+# Super Cache
 
 The Cache Library is a simple cache implementation that allows you to store and retrieve values with a key-value pair system. The library supports multiple storage layers and providers to enable caching data in different locations such as memory, disk, or cloud storage.
 
@@ -7,11 +7,11 @@ The Cache Library is a simple cache implementation that allows you to store and 
 To install the Cache library, you can use NPM or Yarn:
 
 ```bash
-npm install cache-lib
+npm install super-cache
 ```
 
 ```bash
-yarn add cache-lib
+yarn add super-cache
 ```
 
 ## Usage
