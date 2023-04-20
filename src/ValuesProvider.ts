@@ -1,5 +1,4 @@
 import {GettableItem, IProvider, StorageValue, TransactionOptions} from "./types";
-import {keys} from "object-hash";
 import {isUnset} from "./utils";
 
 export default class ValuesProvider implements IProvider {
@@ -33,12 +32,12 @@ export default class ValuesProvider implements IProvider {
 
     async getItem(key: string, opts?: TransactionOptions): Promise<StorageValue> {
         const provider = this.getProviderByKeyMatch(key);
-        return await provider?.getItem(key, opts);
+        return await provider?.getItem(key, opts) ?? null;
     }
 
     async hasItem(key: string, opts?: TransactionOptions): Promise<boolean> {
         const provider = this.getProviderByKeyMatch(key);
-        return await provider?.hasItem(key, opts);
+        return await provider?.hasItem(key, opts) ?? false;
     }
 
     private getProviderByKeyMatch(key: string): IProvider {
@@ -54,7 +53,7 @@ export default class ValuesProvider implements IProvider {
     }
 
     private checkBaseOverlapping(newBase: string) {
-        let overlappingBases = [];
+        const overlappingBases = [];
 
         Object.keys(this.providers).map(base => {
             if (this.keyMatchBase(base, newBase)) {

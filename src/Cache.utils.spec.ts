@@ -14,10 +14,10 @@ describe("Cache Utils", () => {
     });
 
     describe('Namespace', () => {
-        let mget = jest.fn((...keys: string[]) => ['value']);
-        let mset = jest.fn();
-        let msync = jest.fn();
-        let context = {tenantId: 'hello'};
+        const mget = jest.fn((...keys: string[]) => ['value']);
+        const mset = jest.fn();
+        const msync = jest.fn();
+        const context = {tenantId: 'hello'};
 
         beforeEach(function () {
             cache['storageLayers'] = [{
@@ -75,7 +75,12 @@ describe("Cache Utils", () => {
 
         it('should store the provided token in the storage layer', async function () {
             await cache.get('token:bini');
-            expect(cache['storageLayers'][0].getItem('token:bini')).resolves.toBe('token-for-token:bini');
+            expect(await cache['storageLayers'][0].getItem('token:bini')).toBe('token-for-token:bini');
+        });
+
+        it('should not provide value when no match provider', async function() {
+            const val = await cache.get('users:bini');
+            expect(val).toBeNull();
         });
     });
 

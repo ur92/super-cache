@@ -43,7 +43,7 @@ describe("Cache Commands", () => {
         });
 
         it("should add a custom layer instance", () => {
-            let layer = new StorageLayer();
+            const layer = new StorageLayer();
             cache.addStorage(layer);
             expect(cache["storageLayers"]).toHaveLength(1);
             expect(cache["storageLayers"][0]).toBeInstanceOf(StorageLayer);

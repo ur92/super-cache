@@ -1,5 +1,4 @@
 import ValuesProvider from "./ValuesProvider";
-import {keys} from "object-hash";
 
 describe('Values Provider', function () {
     let provider: ValuesProvider;
@@ -18,7 +17,7 @@ describe('Values Provider', function () {
     });
 
     it('should not handle keys of unknown base', function () {
-        expect(provider.getItem('otherData:user123')).resolves.toBeUndefined();
+        expect(provider.getItem('otherData:user123')).resolves.toBeNull();
     });
 
     it('should return has item', function () {
