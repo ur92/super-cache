@@ -50,7 +50,7 @@
   "dependencies": {
     "debug": "^4.3.4",
     "object-hash": "^3.0.0",
-    "unstorage": "https://github.com/ur92/unstorage/archive/refs/tags/1.6.0.tar.gz"
+    "unstorage": "https://github.com/ur92/unstorage"
   },
   "prettier": {
     "singleQuote": true,
@@ -61,5 +61,8 @@
     "exclude": [
       "**/*.spec.js"
     ]
+  },
+  "resolutions": {
+    "unstorage": "portal:/Users/evgenid/dev/unstorage"
   }
 }
