@@ -1,6 +1,6 @@
 {
   "name": "super-cache",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Evgeni Dikerman",
   "license": "MIT",
   "description": "All around cache solution for nodejs and browser. Supports most of cache drivers, multi-layered cache, namespacing and value injecting.",
@@ -23,6 +23,7 @@
     "prepublish": "pnpm test && pnpm build && changelogen --release"
   },
   "dependencies": {
+    "changelogen": "^0.5.3",
     "debug": "^4.3.4",
     "object-hash": "^3.0.0",
     "unstorage": "^1.5.0"
