@@ -1,26 +1,24 @@
-import {createStorage} from "unstorage";
+import { createStorage } from 'unstorage';
 
-import {CreateLayerOptions} from "./types";
-import {
-    IMStorage,
-    IStorage,
-    Unwatch,
-    WatchCallback,
-} from './types/IStorage';
-import {DriverType, StorageValue, TransactionOptions} from "./types/common";
+import { CreateLayerOptions } from './types';
+import { IMStorage, IStorage, Unwatch, WatchCallback } from './types/IStorage';
+import { DriverType, StorageValue, TransactionOptions } from './types/common';
 
 export default class StorageLayer implements IMStorage {
     private storage: IStorage;
 
     constructor(driver?: DriverType, options?: CreateLayerOptions);
     constructor(storage?: IStorage);
-    constructor(driverOrStorage: DriverType | IStorage, options: CreateLayerOptions = {}) {
+    constructor(
+        driverOrStorage: DriverType | IStorage,
+        options: CreateLayerOptions = {}
+    ) {
         let storage;
         if (!driverOrStorage) {
             storage = createStorage();
         } else {
             if (typeof driverOrStorage === 'string') {
-                storage = createStorage(options)
+                storage = createStorage(options);
             } else {
                 storage = driverOrStorage;
             }
@@ -28,14 +26,20 @@ export default class StorageLayer implements IMStorage {
         this.storage = storage;
     }
 
-    async mset(keyValuePairs: Array<[string, StorageValue]>, options?: TransactionOptions): Promise<void> {
+    async mset(
+        keyValuePairs: Array<[string, StorageValue]>,
+        options?: TransactionOptions
+    ): Promise<void> {
         const tasks = keyValuePairs.map(([key, value]) => {
             return this.setItem(key, value, options);
         });
         await Promise.all(tasks);
     }
 
-    async mget(keys: string[], options?: TransactionOptions): Promise<Array<StorageValue>> {
+    async mget(
+        keys: string[],
+        options?: TransactionOptions
+    ): Promise<Array<StorageValue>> {
         const tasks = keys.map((key) => {
             return this.getItem(key, options);
         });
@@ -53,14 +57,14 @@ export default class StorageLayer implements IMStorage {
         return this.storage.dispose();
     }
 
-    async getItem(key: string, opts?: TransactionOptions): Promise<StorageValue> {
+    async getItem(
+        key: string,
+        opts?: TransactionOptions
+    ): Promise<StorageValue> {
         return this.storage.getItem(key, opts);
     }
 
-    async getKeys(
-        base?: string,
-        opts?: TransactionOptions
-    ): Promise<string[]> {
+    async getKeys(base?: string, opts?: TransactionOptions): Promise<string[]> {
         return this.storage.getKeys(base, opts);
     }
 

@@ -1,10 +1,9 @@
-import {IProvider} from "./IProvider";
-import {MaybePromise, TransactionOptions, StorageValue} from "./common";
+import { IProvider } from './IProvider';
+import { MaybePromise, StorageValue, TransactionOptions } from './common';
 
 type Unwatch = () => MaybePromise<void>;
 type WatchEvent = 'update' | 'remove';
 type WatchCallback = (event: WatchEvent, key: string) => any;
-
 
 interface IStorage extends IProvider {
     setItem: (
@@ -21,14 +20,14 @@ interface IStorage extends IProvider {
 }
 
 interface IMStorage extends IStorage {
-    mset(keyValuePairs: Array<[string, StorageValue]>, options?: TransactionOptions): Promise<void>;
-    mget(keys: string[], options?: TransactionOptions): Promise<Array<StorageValue>>;
+    mset(
+        keyValuePairs: Array<[string, StorageValue]>,
+        options?: TransactionOptions
+    ): Promise<void>;
+    mget(
+        keys: string[],
+        options?: TransactionOptions
+    ): Promise<Array<StorageValue>>;
 }
 
-export {
-    WatchEvent,
-    WatchCallback,
-    Unwatch,
-    IStorage,
-    IMStorage
-};
+export { WatchEvent, WatchCallback, Unwatch, IStorage, IMStorage };

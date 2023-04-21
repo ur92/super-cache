@@ -1,6 +1,8 @@
 {
   "name": "super-cache",
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "author": "Evgeni Dikerman",
+  "license": "MIT",
   "description": "All around cache solution for nodejs and browser. Supports most of cache drivers, multi-layered cache, namespacing and value injecting.",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -12,22 +14,19 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
+    "test": "run-s test:*",
     "test:lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\" --list-different",
     "test:unit": "jest",
-    "test:unit:coverage": "jest --coverage",
     "watch:build": "tsc -p tsconfig.json -w",
-    "watch:test": "jest --watch"
+    "watch:test": "jest --watch",
+    "prepublish": "pnpm test && pnpm build && changelogen --release"
   },
-  "author": "Evgeni Dikerman",
-  "license": "MIT",
-  "files": [
-    "dist",
-    "!**/*.spec.*",
-    "!**/*.json",
-    "README.md"
-  ],
+  "dependencies": {
+    "debug": "^4.3.4",
+    "object-hash": "^3.0.0",
+    "unstorage": "^1.5.0"
+  },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
     "@types/debug": "^4.1.7",
@@ -41,16 +40,11 @@
     "eslint-plugin-functional": "^5.0.7",
     "eslint-plugin-import": "^2.27.5",
     "jest": "^29.5.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^2.8.7",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.3"
-  },
-  "dependencies": {
-    "debug": "^4.3.4",
-    "object-hash": "^3.0.0",
-    "unstorage": "^1.5.0"
+    "typescript": "^5.0.3",
+    "yarn-run-all": "^3.1.1"
   },
   "prettier": {
     "singleQuote": true,
@@ -61,5 +55,15 @@
     "exclude": [
       "**/*.spec.js"
     ]
+  },
+  "packageManager": "pnpm@8.3.1",
+  "files": [
+    "build",
+    "!**/*.spec.*",
+    "!**/*.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
   }
 }

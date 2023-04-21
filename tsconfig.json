@@ -43,6 +43,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "jest.config.js"
   ],
   "exclude": ["node_modules/**"],
   "compileOnSave": false,

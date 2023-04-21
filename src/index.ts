@@ -1,10 +1,10 @@
-export {default as Cache } from './Cache';
-export {default as Storage } from './StorageLayer';
+export { default as Cache } from './Cache';
+export { default as Storage } from './StorageLayer';
 export * from './types/IStorage';
-export {IProvider} from "./types";
-export {MaybePromise} from "./types";
-export {TransactionOptions} from "./types";
-export {StorageValue} from "./types";
+export { IProvider } from './types';
+export { MaybePromise } from './types';
+export { TransactionOptions } from './types';
+export { StorageValue } from './types';
 //
 // import redis from 'unstorage/drivers/redis';
 // import lruCache from 'unstorage/drivers/lru-cache';

@@ -1,19 +1,18 @@
-import ValuesProvider from "./ValuesProvider";
+import ValuesProvider from './ValuesProvider';
 
 describe('Values Provider', function () {
     let provider: ValuesProvider;
     beforeEach(function () {
         provider = new ValuesProvider();
-        provider.add(
-            'token:',
-            async (key) => {
-                return 'token-for-' + key;
-            }
-        )
+        provider.add('token:', async (key) => {
+            return 'token-for-' + key;
+        });
     });
 
     it('should handle keys of known base', function () {
-        expect(provider.getItem('token:user123')).resolves.toBe('token-for-token:user123');
+        expect(provider.getItem('token:user123')).resolves.toBe(
+            'token-for-token:user123'
+        );
     });
 
     it('should not handle keys of unknown base', function () {
@@ -25,13 +24,12 @@ describe('Values Provider', function () {
     });
 
     it('should work with multiple value providers', function () {
-        provider.add(
-            'user:',
-            async (key) => {
-                return 'user-for-' + key;
-            }
-        )
-        expect(provider.getItem('user:user123')).resolves.toBe('user-for-user:user123');
+        provider.add('user:', async (key) => {
+            return 'user-for-' + key;
+        });
+        expect(provider.getItem('user:user123')).resolves.toBe(
+            'user-for-user:user123'
+        );
     });
 
     describe('Base overlapping', function () {
@@ -41,7 +39,8 @@ describe('Values Provider', function () {
         });
 
         it('should prevent adding specific base to existing general base', function () {
-            const addProvider = () => provider.add('token:session:', async () => '');
+            const addProvider = () =>
+                provider.add('token:session:', async () => '');
             expect(addProvider).toThrowError();
         });
 
@@ -49,6 +48,5 @@ describe('Values Provider', function () {
             const addProvider = () => provider.add('token:', async () => '');
             expect(addProvider).toThrowError();
         });
-
     });
 });

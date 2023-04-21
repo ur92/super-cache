@@ -1,11 +1,16 @@
-import Namespace from "./Namespace";
+import Namespace from './Namespace';
 import StorageLayer from './StorageLayer';
-import ValuesProvider from "./ValuesProvider";
-import {GettableItem} from "./types";
-import {CreateLayerOptions} from "./types/ILayerOptions";
-import {DriverType, NamespaceContext, NamespaceProvider, StorageValue, TransactionOptions} from "./types/common";
+import ValuesProvider from './ValuesProvider';
+import { GettableItem } from './types';
+import { CreateLayerOptions } from './types/ILayerOptions';
+import {
+    DriverType,
+    NamespaceContext,
+    NamespaceProvider,
+    StorageValue,
+    TransactionOptions,
+} from './types/common';
 import { isUnset, requireStorage } from './utils';
-
 
 export default class Cache {
     private storageLayers: Array<StorageLayer>;
@@ -20,7 +25,10 @@ export default class Cache {
 
     addStorage(driver?: DriverType, options?: CreateLayerOptions);
     addStorage(storage?: StorageLayer);
-    addStorage(driverOrStorage: DriverType | StorageLayer, options: CreateLayerOptions = {}) {
+    addStorage(
+        driverOrStorage: DriverType | StorageLayer,
+        options: CreateLayerOptions = {}
+    ) {
         let storageLayer: StorageLayer;
         if (!driverOrStorage) {
             storageLayer = new StorageLayer();
@@ -35,18 +43,29 @@ export default class Cache {
         return this;
     }
 
-    setNamespace<T extends NamespaceContext>(context: T, provider: NamespaceProvider<T>, separator?: string) {
+    setNamespace<T extends NamespaceContext>(
+        context: T,
+        provider: NamespaceProvider<T>,
+        separator?: string
+    ) {
         this.namespace.setProvider(context, provider, separator);
     }
 
-    addValueProvider(base: string, getItem: GettableItem<StorageValue>, hasItem?: GettableItem<boolean>) {
+    addValueProvider(
+        base: string,
+        getItem: GettableItem<StorageValue>,
+        hasItem?: GettableItem<boolean>
+    ) {
         this.valuesProvider.add(base, getItem, hasItem);
     }
 
     async msync(...keys: string[]): Promise<StorageValue>;
     async msync(keys: string[]): Promise<StorageValue>;
     @requireStorage
-    async msync(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
+    async msync(
+        firstArg: string | string[],
+        ...rest: string[]
+    ): Promise<Array<StorageValue>> {
         const keys = Array.isArray(firstArg) ? firstArg : [firstArg, ...rest];
         const fullKeys = await this.namespace.addNamespaceToKeys(keys);
 
@@ -71,7 +90,10 @@ export default class Cache {
     async mget(...keys: string[]): Promise<StorageValue>;
     async mget(keys: string[]): Promise<StorageValue>;
     @requireStorage
-    async mget(firstArg: string | string[], ...rest: string[]): Promise<Array<StorageValue>> {
+    async mget(
+        firstArg: string | string[],
+        ...rest: string[]
+    ): Promise<Array<StorageValue>> {
         const keys = Array.isArray(firstArg) ? firstArg : [firstArg, ...rest];
         const fullKeys = await this.namespace.addNamespaceToKeys(keys);
 
@@ -90,8 +112,10 @@ export default class Cache {
     }
 
     @requireStorage
-    async mset(pairs: Record<string, StorageValue> | Array<[string, StorageValue]>): Promise<void> {
-        const fullPairs = await this.namespace.addNamespaceToPairs(pairs)
+    async mset(
+        pairs: Record<string, StorageValue> | Array<[string, StorageValue]>
+    ): Promise<void> {
+        const fullPairs = await this.namespace.addNamespaceToPairs(pairs);
 
         let pairsToUpdate;
         if (Array.isArray(fullPairs)) {
@@ -104,23 +128,27 @@ export default class Cache {
 
     @requireStorage
     async sync(key: string): Promise<StorageValue> {
-        return this.msync([key]).then(values => values[0]);
+        return this.msync([key]).then((values) => values[0]);
     }
 
     @requireStorage
     async get(key: string): Promise<StorageValue> {
-        return await this.mget([key]).then(values => values[0]);
+        return await this.mget([key]).then((values) => values[0]);
     }
 
     @requireStorage
     async set(key: string, value: StorageValue): Promise<void> {
-        return this.forEachLayer(async (layer) => await layer.setItem(key, value));
+        return this.forEachLayer(
+            async (layer) => await layer.setItem(key, value)
+        );
     }
 
     @requireStorage
     async clear(base?: string, opts?: TransactionOptions): Promise<void> {
         const [fullBase] = await this.namespace.addNamespaceToKeys(base);
-        return this.forEachLayer(async (layer) => await layer.clear(fullBase, opts));
+        return this.forEachLayer(
+            async (layer) => await layer.clear(fullBase, opts)
+        );
     }
 
     @requireStorage
@@ -129,7 +157,7 @@ export default class Cache {
         keys: string[],
         tasks
     ): Promise<Array<StorageValue>> {
-        if (this.noMoreLayers(index)){
+        if (this.noMoreLayers(index)) {
             return this.valuesProvider.getItems(keys);
         }
 
@@ -148,7 +176,11 @@ export default class Cache {
             tasks
         );
 
-        const keyValuePairsToSet = this.mergeHigherLayerValues(valuesFromHigherLayer, values, missedKeys);
+        const keyValuePairsToSet = this.mergeHigherLayerValues(
+            valuesFromHigherLayer,
+            values,
+            missedKeys
+        );
 
         if (keyValuePairsToSet.length) {
             // produce update task of the current layer
@@ -167,15 +199,19 @@ export default class Cache {
             }
             return missed;
         }, []);
-        return {indexes, keys: missedKeys};
+        return { indexes, keys: missedKeys };
     }
 
     private noMoreLayers(index: number) {
         return index >= this.layersLength;
     }
 
-    private mergeHigherLayerValues(valuesFromLowerLayer: Array<StorageValue>, values: Array<StorageValue>, missedKeys: { indexes: number[], keys: string[] }) {
-        const {indexes, keys} = missedKeys;
+    private mergeHigherLayerValues(
+        valuesFromLowerLayer: Array<StorageValue>,
+        values: Array<StorageValue>,
+        missedKeys: { indexes: number[]; keys: string[] }
+    ) {
+        const { indexes, keys } = missedKeys;
         const keyValuePairsToSet: Array<[string, StorageValue]> = [];
         valuesFromLowerLayer.forEach((value, i) => {
             if (isUnset(value)) {
@@ -189,7 +225,10 @@ export default class Cache {
         return keyValuePairsToSet;
     }
 
-    private isAllKeysFound(keysOfMissedValues: { indexes: number[], keys: string[] }) {
+    private isAllKeysFound(keysOfMissedValues: {
+        indexes: number[];
+        keys: string[];
+    }) {
         return !keysOfMissedValues.keys.length;
     }
 
@@ -198,7 +237,9 @@ export default class Cache {
     }
 
     private layer(n): StorageLayer {
-        return n < 0 ? this.storageLayers[this.layersLength + n] : this.storageLayers[n];
+        return n < 0
+            ? this.storageLayers[this.layersLength + n]
+            : this.storageLayers[n];
     }
 
     private async forEachLayer(fn: (layer: StorageLayer) => any): Promise<any> {

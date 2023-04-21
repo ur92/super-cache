@@ -1,4 +1,4 @@
-import {StorageValue, TransactionOptions} from "./common";
+import { StorageValue, TransactionOptions } from './common';
 
 type GettableItem<T> = (key: string, opts?: TransactionOptions) => Promise<T>;
 
@@ -7,4 +7,4 @@ interface IProvider {
     getItem: GettableItem<StorageValue>;
 }
 
-export {IProvider, GettableItem};
+export { IProvider, GettableItem };

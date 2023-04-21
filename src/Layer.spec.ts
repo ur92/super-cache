@@ -1,6 +1,6 @@
 import StorageLayer from './StorageLayer';
-import {IStorage} from './types/IStorage';
-import {StorageValue, TransactionOptions} from "./types/common";
+import { IStorage } from './types/IStorage';
+import { StorageValue, TransactionOptions } from './types/common';
 
 describe('Layer', () => {
     let storage: IStorage;
@@ -32,9 +32,21 @@ describe('Layer', () => {
             await layer.mset(keyValuePairs);
 
             expect(storage.setItem).toHaveBeenCalledTimes(3);
-            expect(storage.setItem).toHaveBeenCalledWith('key1', 'value1', undefined);
-            expect(storage.setItem).toHaveBeenCalledWith('key2', 'value2', undefined);
-            expect(storage.setItem).toHaveBeenCalledWith('key3', 'value3', undefined);
+            expect(storage.setItem).toHaveBeenCalledWith(
+                'key1',
+                'value1',
+                undefined
+            );
+            expect(storage.setItem).toHaveBeenCalledWith(
+                'key2',
+                'value2',
+                undefined
+            );
+            expect(storage.setItem).toHaveBeenCalledWith(
+                'key3',
+                'value3',
+                undefined
+            );
         });
     });
 
@@ -75,7 +87,7 @@ describe('Layer', () => {
         });
 
         it('passes opts to storage.getItem', async () => {
-            const opts: TransactionOptions = {someOption: 'value'};
+            const opts: TransactionOptions = { someOption: 'value' };
 
             await layer.getItem('key', opts);
 
@@ -94,7 +106,7 @@ describe('Layer', () => {
 
         it('passes base and opts to storage.clear', async () => {
             const base = 'base';
-            const opts: TransactionOptions = {someOption: 'value'};
+            const opts: TransactionOptions = { someOption: 'value' };
 
             await layer.clear(base, opts);
 
@@ -119,10 +131,12 @@ describe('Layer', () => {
         });
 
         it('calls storage.getKeys with base', async () => {
-            await layer.getKeys('zaloop-XXX', {sync:true});
+            await layer.getKeys('zaloop-XXX', { sync: true });
 
             expect(storage.getKeys).toHaveBeenCalledTimes(1);
-            expect(storage.getKeys).toHaveBeenCalledWith('zaloop-XXX', {sync:true});
+            expect(storage.getKeys).toHaveBeenCalledWith('zaloop-XXX', {
+                sync: true,
+            });
         });
     });
 
@@ -134,10 +148,12 @@ describe('Layer', () => {
         });
 
         it('calls storage.getKeys with base', async () => {
-            await layer.getKeys('zaloop-XXX', {sync:true});
+            await layer.getKeys('zaloop-XXX', { sync: true });
 
             expect(storage.getKeys).toHaveBeenCalledTimes(1);
-            expect(storage.getKeys).toHaveBeenCalledWith('zaloop-XXX', {sync:true});
+            expect(storage.getKeys).toHaveBeenCalledWith('zaloop-XXX', {
+                sync: true,
+            });
         });
     });
 
@@ -145,7 +161,9 @@ describe('Layer', () => {
         it('should call storage.hasItem with the correct key and options', async () => {
             await layer.hasItem('test', { timeout: 1000 });
 
-            expect(storage.hasItem).toHaveBeenCalledWith('test', { timeout: 1000 });
+            expect(storage.hasItem).toHaveBeenCalledWith('test', {
+                timeout: 1000,
+            });
         });
 
         it('should return the result of storage.hasItem', async () => {
@@ -161,7 +179,9 @@ describe('Layer', () => {
         it('should call storage.removeItem with the correct key and options', async () => {
             await layer.removeItem('test', { timeout: 1000 });
 
-            expect(storage.removeItem).toHaveBeenCalledWith('test', { timeout: 1000 });
+            expect(storage.removeItem).toHaveBeenCalledWith('test', {
+                timeout: 1000,
+            });
         });
     });
 
@@ -171,7 +191,9 @@ describe('Layer', () => {
 
             await layer.setItem('test', value, { timeout: 1000 });
 
-            expect(storage.setItem).toHaveBeenCalledWith('test', value, { timeout: 1000 });
+            expect(storage.setItem).toHaveBeenCalledWith('test', value, {
+                timeout: 1000,
+            });
         });
     });
 
